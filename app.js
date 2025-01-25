@@ -17,6 +17,8 @@ const bodyParser = require('body-parser');
 const schedule = require('node-schedule'); // เพิ่มการใช้งาน node-schedule
 const SystemAnnouncement = require('./server/models/SystemAnnouncements'); // เพิ่มโมเดล SystemAnnouncements
 const bcrypt = require('bcrypt');
+const crypto = require('crypto');
+
 
 const app = express();
 const port = process.env.PORT || 5001;
@@ -101,17 +103,24 @@ passport.use(
 passport.serializeUser(User.serializeUser());
 passport.deserializeUser(User.deserializeUser());
 
+const generateSessionSecret = () => {
+  return crypto.randomBytes(32).toString('hex'); // สร้าง string ยาว 64 ตัวอักษร
+};
+
+const sessionSecret = generateSessionSecret();
+console.log('Generated SESSION_SECRET:', sessionSecret);
+
 // Session setup
 app.use(
   session({
-    secret: process.env.SESSION_SECRET || 'keyboard cat',
+    secret: process.env.SESSION_SECRET || sessionSecret,
     resave: false,
     saveUninitialized: false,
     store: MongoStore.create({ mongoUrl: process.env.MONGODB_URI }), 
     cookie: {
-      secure: process.env.NODE_ENV === 'production', // ต้องเป็น true ถ้าใช้ HTTPS
+      secure: process.env.NODE_ENV === 'production',
       httpOnly: true,
-      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      maxAge: 24 * 60 * 60 * 1000,
     },
   })
 );
