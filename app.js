@@ -116,6 +116,10 @@ app.use(
   })
 );
 
+console.log('Session middleware initialized');
+console.log('MongoDB URI:', process.env.MONGODB_URI);
+console.log('Session secret:', process.env.SESSION_SECRET ? 'Set' : 'Not set');
+
 app.use(passport.initialize());
 app.use(passport.session());
 app.use(cookieParser());

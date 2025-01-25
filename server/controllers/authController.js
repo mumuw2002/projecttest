@@ -42,9 +42,9 @@ exports.loginPage = (req, res) => {
 };
 
 exports.login = async (req, res, next) => {
-  // Input validation
   if (!req.body.googleEmail || !req.body.password) {
       req.flash('error', 'Please enter email and password');
+      console.log('Login attempt: Missing email or password');
       return res.redirect('/login');
   }
 
@@ -56,6 +56,7 @@ exports.login = async (req, res, next) => {
 
       if (!user) {
           req.flash('error', info.message || 'Invalid email or password');
+          console.log('Login attempt: Invalid email or password');
           return res.redirect('/login');
       }
 
@@ -69,7 +70,13 @@ exports.login = async (req, res, next) => {
               user.lastActive = Date.now(); 
               await user.save();
 
-              // Redirect based on role (example)
+              // Debugging
+              console.log('User authenticated:', req.isAuthenticated());
+              console.log('User role:', user.role);
+              console.log('User ID:', user._id);
+              console.log('Redirecting to /space');
+
+              // Redirect based on role
               if (user.role === 'admin') {
                   return res.redirect('/adminPage'); 
               } else {
@@ -82,7 +89,6 @@ exports.login = async (req, res, next) => {
       });
   })(req, res, next);
 };
-
 
 exports.registerUser = async (req, res) => {
   const { username, password, confirmPassword, googleEmail } = req.body;
