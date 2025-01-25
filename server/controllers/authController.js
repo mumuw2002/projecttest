@@ -74,7 +74,7 @@ exports.login = async (req, res, next) => {
               console.log('User authenticated:', req.isAuthenticated());
               console.log('User role:', user.role);
               console.log('User ID:', user._id);
-              console.log('Redirecting to /space');
+              console.log('Session ID:', req.sessionID);
 
               // Redirect based on role
               if (user.role === 'admin') {
