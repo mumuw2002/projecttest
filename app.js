@@ -18,7 +18,7 @@ const schedule = require('node-schedule'); // เพิ่มการใช้�
 const SystemAnnouncement = require('./server/models/SystemAnnouncements'); // เพิ่มโมเดล SystemAnnouncements
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
-
+const passport = require('./server/config/passport'); 
 
 const app = express();
 const port = process.env.PORT || 5001;
@@ -131,14 +131,29 @@ app.use(
     secret: process.env.SESSION_SECRET || sessionSecret,
     resave: false,
     saveUninitialized: false,
-    store: MongoStore.create({ mongoUrl: process.env.MONGODB_URI }), 
+    store: MongoStore.create({
+      mongoUrl: process.env.MONGODB_URI, // URL ของ MongoDB
+      collectionName: 'sessions', // ชื่อคอลเล็กชันที่ใช้เก็บ session
+      autoRemove: 'interval', // เปิดใช้งานการลบอัตโนมัติ
+      autoRemoveInterval: 10, // ลบทุกๆ 10 นาที
+      ttl: 24 * 60 * 60,
+    }),
     cookie: {
       secure: process.env.NODE_ENV === 'production',
       httpOnly: true,
+      sameSite: 'lax', // ใช้ 'strict' หากต้องการเพิ่มความปลอดภัย
       maxAge: 24 * 60 * 60 * 1000,
     },
   })
 );
+
+
+app.use((req, res, next) => {
+  console.log('Session ID:', req.sessionID);
+  console.log('User from session:', req.session.passport?.user);
+  next();
+});
+
 
 console.log('Session middleware initialized');
 console.log('MongoDB URI:', process.env.MONGODB_URI);
@@ -163,6 +178,7 @@ app.use(flash());
 app.use((req, res, next) => {
   res.locals.success = req.flash('success');
   res.locals.error = req.flash('error');
+  
   next();
 });
 
