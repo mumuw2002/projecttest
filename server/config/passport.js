@@ -5,50 +5,55 @@ const User = require('../models/User'); // ปรับเส้นทางใ�
 passport.use(
   new GoogleStrategy(
     {
-      clientID: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    clientID: process.env.GOOGLE_CLIENT_ID,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
       callbackURL: '/auth/google/callback',
-    },
-    async (accessToken, refreshToken, profile, done) => {
-      try {
-        let user = await User.findOne({ googleId: profile.id });
-
-        if (!user) {
-          user = new User({
-            googleId: profile.id,
-            name: profile.displayName,
-            email: profile.emails[0].value,
+  },
+  async (accessToken, refreshToken, profile, done) => {
+    try {
+        console.log('Google OAuth Login');
+        console.log('Google Email:', profile.emails[0].value); // แสดง email
+        console.log('Google Profile:', profile); // แสดงข้อมูลโปรไฟล์ทั้งหมด
+        
+      let user = await User.findOne({ googleId: profile.id });
+      
+      if (!user) {
+        user = new User({
+          googleId: profile.id,
+          name: profile.displayName,
+          email: profile.emails[0].value,
             role: profile.emails[0].value === process.env.ADMIN_EMAIL ? 'admin' : 'user',
             profileImage: profile.photos[0]?.value || '',
-          });
-          await user.save();
-        } else {
-          // กรณีมีอยู่แล้ว อัปเดต role ให้เป็น admin ถ้าจำเป็น
+        });
+        await user.save();
+      } else {
+          // ถ้ามีผู้ใช้แล้ว อัปเดตข้อมูล
           if (profile.emails[0].value === process.env.ADMIN_EMAIL) {
-            user.role = 'admin';
-            await user.save();
+          user.role = 'admin';
+                await user.save();
           }
-        }
-
-        return done(null, user);
-      } catch (err) {
-        console.error(err);
-        return done(err, null);
       }
+
+      return done(null, user);
+    } catch (err) {
+      console.error(err);
+      return done(err, null);
     }
+  }
   )
 );
 
+
 // Serialize user
 passport.serializeUser((user, done) => {
-  done(null, user.id);
+  done(null, user.id); // serialize ด้วย user ID
 });
 
 // Deserialize user
 passport.deserializeUser(async (id, done) => {
   try {
     const user = await User.findById(id);
-    done(null, user);
+    done(null, user); // deserialize user จาก database
   } catch (err) {
     done(err, null);
   }

@@ -6,6 +6,7 @@ const connectDB = require('./server/config/db');
 const session = require('express-session');
 const MongoStore = require('connect-mongo');
 const path = require('path');
+const helmet = require('helmet');
 const cookieParser = require('cookie-parser');
 const flash = require('connect-flash');
 const LocalStrategy = require('passport-local').Strategy;
@@ -30,6 +31,11 @@ connectDB().catch(err => {
   console.error('Failed to connect to database:', err);
   process.exit(1);
 });
+
+if (!process.env.SESSION_SECRET) {
+  console.error('SESSION_SECRET is not defined in environment variables');
+  process.exit(1);
+}
 
 const adminEmail = process.env.ADMIN_EMAIL;
 const adminPassword = process.env.ADMIN_PASSWORD;
@@ -111,35 +117,33 @@ passport.use(
   )
 );
 
-const sessionSecret = process.env.SESSION_SECRET; // ใช้ SESSION_SECRET จาก environment เท่านั้น
+const sessionSecret = process.env.SESSION_SECRET;
 
 if (!sessionSecret) {
   console.error('SESSION_SECRET is not defined in environment variables');
-  process.exit(1); // หยุดการทำงานหากไม่มี SESSION_SECRET
+  process.exit(1);
 }
 
 console.log('Using SESSION_SECRET from environment variables');
 
 app.use(
   session({
-    secret: sessionSecret, // ใช้ SESSION_SECRET จาก environment
+    secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
     store: MongoStore.create({
       mongoUrl: process.env.MONGODB_URI,
       collectionName: 'sessions',
-      autoRemove: 'interval',
-      autoRemoveInterval: 10,
-      ttl: 24 * 60 * 60,
     }),
     cookie: {
       secure: process.env.NODE_ENV === 'production',
       httpOnly: true,
-      sameSite: 'none',
+      sameSite: 'lax',
       maxAge: 24 * 60 * 60 * 1000,
     },
   })
 );
+
 
 app.use((req, res, next) => {
   console.log('Session ID:', req.sessionID);
@@ -163,6 +167,8 @@ app.use('/img', express.static(path.join(__dirname, 'public/img')));
 app.use('/public', express.static(path.join(__dirname, 'public')));
 app.use('/docUploads', express.static(path.join(__dirname, 'docUploads')));
 app.use(methodOverride('_method'));
+
+app.use(helmet());
 
 // Flash middleware setup
 app.use(flash());

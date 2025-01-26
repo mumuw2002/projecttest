@@ -74,6 +74,13 @@ exports.login = async (req, res, next) => {
         user.lastLogin = Date.now();
         user.lastActive = Date.now();
         await user.save();
+
+        console.log('User authenticated:', req.isAuthenticated());
+        console.log('User role:', user.role);
+        console.log('User ID:', user._id);
+        console.log('Session ID:', req.sessionID);
+
+        // บันทึกเซสชันให้เรียบร้อย
         req.session.save((err) => {
           if (err) {
             console.error('Error saving session:', err);
@@ -82,10 +89,8 @@ exports.login = async (req, res, next) => {
           }
           if (user.role === 'admin') {
             return res.redirect('/adminPage');
-          } else if (user.role === 'user') {
-            return res.redirect('/space');
           } else {
-            return res.redirect('/login');
+            return res.redirect('/space');
           }
         });
       } catch (error) {
