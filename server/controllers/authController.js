@@ -42,26 +42,27 @@ exports.loginPage = (req, res) => {
 };
 
 exports.login = async (req, res, next) => {
-    const { email, password } = req.body;
-    try {
-        const user = await User.findOne({ email });
-        if (!user) {
-            return res.status(400).json({ message: 'User not found' });
-        }
-        const isMatch = await user.comparePassword(password);
-        if (!isMatch) {
-            return res.status(400).json({ message: 'Invalid credentials' });
-        }
-        req.logIn(user, async (err) => {
-            if (err) {
-                return next(err);
-            }
-            return res.status(200).json({ message: 'Logged in successfully', user });
-        });
-    } catch (err) {
-        next(err);
-    }
+  const { email, password } = req.body;
+  try {
+      const user = await User.findOne({ email });
+      if (!user) {
+          return res.status(400).json({ message: 'User not found' });
+      }
+      const isMatch = await user.comparePassword(password);
+      if (!isMatch) {
+          return res.status(400).json({ message: 'Invalid credentials' });
+      }
+      req.logIn(user, async (err) => {
+          if (err) {
+              return next(err);
+          }
+          return res.status(200).json({ message: 'Logged in successfully', user });
+      });
+  } catch (err) {
+      next(err);
+  }
 };
+
 exports.registerUser = async (req, res) => {
   const { username, password, confirmPassword, googleEmail } = req.body;
   const errors = [];

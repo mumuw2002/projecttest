@@ -1,7 +1,7 @@
-//server\models\User.js
 const mongoose = require('mongoose');
 const passportLocalMongoose = require('passport-local-mongoose');
 const Schema = mongoose.Schema;
+const bcrypt = require('bcrypt');
 
 const UserSchema = new Schema({
     userid: {
@@ -73,5 +73,10 @@ const UserSchema = new Schema({
 });
 
 UserSchema.plugin(passportLocalMongoose, { usernameField: 'googleEmail' });
+
+// เพิ่มเมธอด comparePassword
+UserSchema.methods.comparePassword = async function(candidatePassword) {
+    return await bcrypt.compare(candidatePassword, this.password);
+};
 
 module.exports = mongoose.model('User', UserSchema);
