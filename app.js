@@ -111,16 +111,18 @@ passport.use(
   )
 );
 
-const generateSessionSecret = () => {
-  return crypto.randomBytes(32).toString('hex');
-};
+const sessionSecret = process.env.SESSION_SECRET; // ใช้ SESSION_SECRET จาก environment เท่านั้น
 
-const sessionSecret = generateSessionSecret();
-console.log('Generated SESSION_SECRET:', sessionSecret);
+if (!sessionSecret) {
+  console.error('SESSION_SECRET is not defined in environment variables');
+  process.exit(1); // หยุดการทำงานหากไม่มี SESSION_SECRET
+}
+
+console.log('Using SESSION_SECRET from environment variables');
 
 app.use(
   session({
-    secret: process.env.SESSION_SECRET || sessionSecret,
+    secret: sessionSecret, // ใช้ SESSION_SECRET จาก environment
     resave: false,
     saveUninitialized: false,
     store: MongoStore.create({
