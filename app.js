@@ -93,16 +93,22 @@ passport.use(User.createStrategy());
 
 // Passport configuration
 passport.serializeUser((user, done) => {
-  console.log('Serializing user:', user._id);
-  done(null, user._id);
+  console.log('Serializing user:', user.id); // ตรวจสอบว่า user.id ถูกเก็บลงใน session
+  done(null, user.id);
 });
 
 passport.deserializeUser(async (id, done) => {
   try {
+    console.log('Deserializing user with id:', id); // ตรวจสอบว่า id ถูกส่งมา
     const user = await User.findById(id);
-    console.log('Deserializing user:', user);
+    if (!user) {
+      console.error('User not found during deserialization');
+      return done(null, false);
+    }
+    console.log('User found during deserialization:', user);
     done(null, user);
   } catch (err) {
+    console.error('Deserialization error:', err);
     done(err, null);
   }
 });
@@ -136,9 +142,9 @@ app.use(
       collectionName: 'sessions',
     }),
     cookie: {
-      secure: process.env.NODE_ENV === 'production', // ใช้ secure: true เฉพาะใน production
+      secure: process.env.NODE_ENV === 'production', // ใช้ secure: true เฉพาะใน production (HTTPS)
       httpOnly: true,
-      sameSite: 'lax',
+      sameSite: 'lax', // ตั้งค่าเป็น 'lax' หรือ 'strict' ตามความเหมาะสม
       maxAge: 24 * 60 * 60 * 1000, // 1 วัน
     },
   })
@@ -148,6 +154,7 @@ app.use((req, res, next) => {
   console.log('Session ID:', req.sessionID);
   console.log('Session data:', req.session);
   console.log('User from session:', req.session.passport?.user);
+  console.log('User from session:', req.user);
   next();
 });
 
