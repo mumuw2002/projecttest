@@ -8,6 +8,7 @@ exports.isLoggedIn = async function (req, res, next) {
     console.log('Authenticated:', req.isAuthenticated());
     console.log('Session ID:', req.sessionID);
     console.log('User in session:', req.session.passport?.user);
+    console.log('User in session:', req.session.passport?.user); 
 
     if (req.isAuthenticated()) {
         console.log('User is authenticated, proceeding to next middleware');

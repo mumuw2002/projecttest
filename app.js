@@ -100,8 +100,23 @@ passport.use(
     User.authenticate()
   )
 );
-passport.serializeUser(User.serializeUser());
-passport.deserializeUser(User.deserializeUser());
+
+// Serialize user
+passport.serializeUser((user, done) => {
+  console.log('Serializing user:', user._id); // ตรวจสอบว่า user ถูก serialize หรือไม่
+  done(null, user._id);
+});
+
+// Deserialize user
+passport.deserializeUser(async (id, done) => {
+  try {
+    const user = await User.findById(id);
+    console.log('Deserializing user:', user); // ตรวจสอบว่า user ถูก deserialize หรือไม่
+    done(null, user);
+  } catch (err) {
+    done(err, null);
+  }
+});
 
 const generateSessionSecret = () => {
   return crypto.randomBytes(32).toString('hex'); // สร้าง string ยาว 64 ตัวอักษร
