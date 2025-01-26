@@ -47,30 +47,60 @@ exports.loginPage = (req, res) => {
 };
 
 exports.login = async (req, res, next) => {
+  console.log('Login process started'); // แจ้งว่ากระบวนการเข้าสู่ระบบเริ่มต้น
+
+  // ตรวจสอบว่ามีการกรอก email และ password หรือไม่
   if (!req.body.googleEmail || !req.body.password) {
     req.flash('error', 'Please enter email and password');
     console.log('Login attempt: Missing email or password');
+    console.log('Request body:', req.body); // แสดงข้อมูลที่ส่งมาจากฟอร์ม
     return res.redirect('/login');
   }
 
+  console.log('Email and password provided:', {
+    email: req.body.googleEmail,
+    password: req.body.password, // ควรระวังในการแสดง password ใน production
+  });
+
+  // เริ่มกระบวนการ authenticate
+  console.log('Starting passport.authenticate');
   passport.authenticate('local', async (err, user, info) => {
     if (err) {
       console.error('Authentication error:', err);
       return next(err);
     }
 
+    // ตรวจสอบว่ามีผู้ใช้หรือไม่
     if (!user) {
       req.flash('error', info.message || 'Invalid email or password');
       console.log('Login attempt: Invalid email or password');
+      console.log('Info from passport:', info); // แสดงข้อมูลเพิ่มเติมจาก passport
       return res.redirect('/login');
     }
 
+    console.log('User found:', {
+      userId: user._id,
+      email: user.googleEmail,
+      role: user.role,
+    });
+
+    // เริ่มกระบวนการ logIn
+    console.log('Starting req.logIn');
     req.logIn(user, async (err) => {
       if (err) {
         console.error('Login error:', err);
         return next(err);
       }
+
+      console.log('User logged in successfully:', {
+        userId: user._id,
+        email: user.googleEmail,
+        role: user.role,
+      });
+
       try {
+        // อัปเดตเวลาล่าสุดที่ผู้ใช้เข้าสู่ระบบและใช้งาน
+        console.log('Updating lastLogin and lastActive for user:', user._id);
         user.lastLogin = Date.now();
         user.lastActive = Date.now();
         await user.save();
@@ -80,16 +110,21 @@ exports.login = async (req, res, next) => {
         console.log('User ID:', user._id);
         console.log('Session ID:', req.sessionID);
 
-        // บันทึกเซสชันให้เรียบร้อย
+        // บันทึก session ให้เรียบร้อย
+        console.log('Saving session...');
         req.session.save((err) => {
           if (err) {
             console.error('Error saving session:', err);
           } else {
             console.log('Session saved successfully');
           }
+
+          // ตรวจสอบบทบาทผู้ใช้และ redirect ไปยังหน้าที่เหมาะสม
           if (user.role === 'admin') {
+            console.log('Redirecting to admin page');
             return res.redirect('/adminPage');
           } else {
+            console.log('Redirecting to user space');
             return res.redirect('/space');
           }
         });
@@ -100,6 +135,7 @@ exports.login = async (req, res, next) => {
     });
   })(req, res, next);
 };
+
 exports.registerUser = async (req, res) => {
   const { username, password, confirmPassword, googleEmail } = req.body;
   const errors = [];
