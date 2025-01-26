@@ -41,33 +41,27 @@ exports.loginPage = (req, res) => {
   res.render("log/login", { error: req.flash('error') }); 
 };
 
-req.logIn(user, async (err) => {
-  if (err) {
-    console.error('Login error:', err);
-    return next(err);
-  }
-  try {
-    user.lastLogin = Date.now(); 
-    user.lastActive = Date.now(); 
-    await user.save();
-
-    console.log('User authenticated:', req.isAuthenticated());
-    console.log('User role:', user.role);
-    console.log('User ID:', user._id);
-    console.log('Session ID:', req.sessionID);
-
-    // Redirect based on role
-    if (user.role === 'admin') {
-      return res.redirect('/adminPage'); 
-    } else {
-      return res.redirect('/space'); 
+exports.login = async (req, res, next) => {
+    const { email, password } = req.body;
+    try {
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(400).json({ message: 'User not found' });
+        }
+        const isMatch = await user.comparePassword(password);
+        if (!isMatch) {
+            return res.status(400).json({ message: 'Invalid credentials' });
+        }
+        req.logIn(user, async (err) => {
+            if (err) {
+                return next(err);
+            }
+            return res.status(200).json({ message: 'Logged in successfully', user });
+        });
+    } catch (err) {
+        next(err);
     }
-  } catch (error) {
-    console.error('Error updating lastActive:', error);
-    return next(error);
-  }
-});
-
+};
 exports.registerUser = async (req, res) => {
   const { username, password, confirmPassword, googleEmail } = req.body;
   const errors = [];
