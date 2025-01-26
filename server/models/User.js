@@ -73,7 +73,6 @@ const UserSchema = new Schema({
 });
 
 UserSchema.plugin(passportLocalMongoose, { usernameField: 'googleEmail' });
-
 // เพิ่มเมธอด comparePassword
 UserSchema.methods.comparePassword = async function(candidatePassword) {
     return await bcrypt.compare(candidatePassword, this.password);

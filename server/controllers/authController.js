@@ -42,25 +42,52 @@ exports.loginPage = (req, res) => {
 };
 
 exports.login = async (req, res, next) => {
-  const { email, password } = req.body;
-  try {
-      const user = await User.findOne({ email });
+  if (!req.body.googleEmail || !req.body.password) {
+      req.flash('error', 'Please enter email and password');
+      console.log('Login attempt: Missing email or password');
+      return res.redirect('/login');
+  }
+
+  passport.authenticate('local', async (err, user, info) => {
+      if (err) {
+          console.error('Authentication error:', err);
+          return next(err);
+      }
+
       if (!user) {
-          return res.status(400).json({ message: 'User not found' });
+          req.flash('error', info.message || 'Invalid email or password');
+          console.log('Login attempt: Invalid email or password');
+          return res.redirect('/login');
       }
-      const isMatch = await user.comparePassword(password);
-      if (!isMatch) {
-          return res.status(400).json({ message: 'Invalid credentials' });
-      }
+
       req.logIn(user, async (err) => {
           if (err) {
+              console.error('Login error:', err);
               return next(err);
           }
-          return res.status(200).json({ message: 'Logged in successfully', user });
+          try {
+              user.lastLogin = Date.now(); 
+              user.lastActive = Date.now(); 
+              await user.save();
+
+              // Debugging
+              console.log('User authenticated:', req.isAuthenticated());
+              console.log('User role:', user.role);
+              console.log('User ID:', user._id);
+              console.log('Session ID:', req.sessionID);
+
+              // Redirect based on role
+              if (user.role === 'admin') {
+                  return res.redirect('/adminPage'); 
+              } else {
+                  return res.redirect('/space'); 
+              }
+          } catch (error) {
+              console.error('Error updating lastActive:', error);
+              return next(error);
+          }
       });
-  } catch (err) {
-      next(err);
-  }
+  })(req, res, next);
 };
 
 exports.registerUser = async (req, res) => {
