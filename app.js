@@ -1,4 +1,3 @@
-// app.js
 require('dotenv').config();
 const express = require('express');
 const expressLayouts = require('express-ejs-layouts');
@@ -13,11 +12,11 @@ const LocalStrategy = require('passport-local').Strategy;
 const User = require('./server/models/User');
 const moment = require('moment');
 const bodyParser = require('body-parser');
-const schedule = require('node-schedule'); // เพิ่มการใช้งาน node-schedule
-const SystemAnnouncement = require('./server/models/SystemAnnouncements'); // เพิ่มโมเดล SystemAnnouncements
+const schedule = require('node-schedule');
+const SystemAnnouncement = require('./server/models/SystemAnnouncements');
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
-const passport = require('./server/config/passport'); 
+const passport = require('./server/config/passport');
 
 const app = express();
 const port = process.env.PORT || 5001;
@@ -33,7 +32,7 @@ connectDB().catch(err => {
 });
 
 const adminEmail = process.env.ADMIN_EMAIL;
-const adminPassword = process.env.ADMIN_PASSWORD; // ดึงรหัสผ่านจาก .env
+const adminPassword = process.env.ADMIN_PASSWORD;
 
 // สร้าง Admin เมื่อเซิร์ฟเวอร์เริ่มทำงาน
 const createAdminUser = async () => {
@@ -73,12 +72,11 @@ schedule.scheduleJob('0 0 * * *', async () => {
   }
 });
 
-
 // เรียกใช้งานฟังก์ชันหลังเชื่อมต่อฐานข้อมูล
 connectDB()
   .then(() => {
     console.log('Connected to database');
-    createAdminUser(); // เรียกฟังก์ชันสร้าง Admin
+    createAdminUser();
   })
   .catch(err => {
     console.error('Failed to connect to database:', err);
@@ -87,17 +85,12 @@ connectDB()
 
 passport.use(User.createStrategy());
 
-
 // Passport configuration
-
-// Serialize user
 passport.serializeUser((user, done) => {
   console.log('Serializing user:', user._id);
   done(null, user._id);
 });
 
-
-// Deserialize user
 passport.deserializeUser(async (id, done) => {
   try {
     const user = await User.findById(id);
@@ -119,7 +112,7 @@ passport.use(
 );
 
 const generateSessionSecret = () => {
-  return crypto.randomBytes(32).toString('hex'); // สร้าง string ยาว 64 ตัวอักษร
+  return crypto.randomBytes(32).toString('hex');
 };
 
 const sessionSecret = generateSessionSecret();
@@ -138,7 +131,7 @@ app.use(
       ttl: 24 * 60 * 60,
     }),
     cookie: {
-      secure: process.env.NODE_ENV === 'production', // ใช้ true หากใช้ HTTPS
+      secure: process.env.NODE_ENV === 'production',
       httpOnly: true,
       sameSite: 'none',
       maxAge: 24 * 60 * 60 * 1000,
@@ -148,6 +141,7 @@ app.use(
 
 app.use((req, res, next) => {
   console.log('Session ID:', req.sessionID);
+  console.log('Session data:', req.session);
   console.log('User from session:', req.session.passport?.user);
   next();
 });
@@ -161,10 +155,9 @@ app.use(passport.initialize());
 app.use(passport.session());
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.json()); // Middleware to parse JSON requests
+app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/img', express.static(path.join(__dirname, 'public/img')));
-
 app.use('/public', express.static(path.join(__dirname, 'public')));
 app.use('/docUploads', express.static(path.join(__dirname, 'docUploads')));
 app.use(methodOverride('_method'));
@@ -176,20 +169,19 @@ app.use(flash());
 app.use((req, res, next) => {
   res.locals.success = req.flash('success');
   res.locals.error = req.flash('error');
-  
   next();
 });
 
 // Middleware to handle due date validation and formatting
 app.use((req, res, next) => {
   if (req.body.dueDate) {
-    const dueDate = moment(req.body.dueDate, moment.ISO_8601, true); // Parsing ISO 8601 dates
+    const dueDate = moment(req.body.dueDate, moment.ISO_8601, true);
     if (!dueDate.isValid()) {
       console.error('Invalid date format:', req.body.dueDate);
       req.flash('error', 'Invalid date format');
       return res.redirect('back');
     }
-    req.body.dueDate = dueDate.toISOString(); // Standardize to ISO format for storage
+    req.body.dueDate = dueDate.toISOString();
   }
   next();
 });
@@ -207,7 +199,6 @@ app.use(async (req, res, next) => {
   next();
 });
 
-
 // Templating Engine setup
 app.use(expressLayouts);
 app.set('layout', './layouts/main');
@@ -222,12 +213,11 @@ app.use('/', require('./server/routes/taskRou/taskPageRoutes'));
 app.use('/', require('./server/routes/taskRou/taskDetailRoutes'));
 app.use('/', require('./server/routes/taskRou/taskComplaintRouter'));
 app.use('/', require('./server/routes/notiRoutes'));
-app.use('/', require('./server/routes/subtaskRoutes')); 
+app.use('/', require('./server/routes/subtaskRoutes'));
 app.use('/', require('./server/routes/settingRoutes'));
 app.use('/', require('./server/routes/userRoutes'));
 app.use('/', require('./server/routes/adminRoutes'));
 app.use('/', require('./server/routes/collabRoutes'));
-
 
 // Handle 404 errors
 app.get('*', (req, res) => {
