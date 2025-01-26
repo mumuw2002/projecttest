@@ -91,38 +91,6 @@ connectDB()
 
 passport.use(User.createStrategy());
 
-// Passport configuration
-passport.serializeUser((user, done) => {
-  console.log('Serializing user:', user.id); // ตรวจสอบว่า user.id ถูกเก็บลงใน session
-  done(null, user.id);
-});
-
-passport.deserializeUser(async (id, done) => {
-  try {
-    console.log('Deserializing user with id:', id); // ตรวจสอบว่า id ถูกส่งมา
-    const user = await User.findById(id);
-    if (!user) {
-      console.error('User not found during deserialization');
-      return done(null, false);
-    }
-    console.log('User found during deserialization:', user);
-    done(null, user);
-  } catch (err) {
-    console.error('Deserialization error:', err);
-    done(err, null);
-  }
-});
-
-passport.use(
-  new LocalStrategy(
-    {
-      usernameField: 'googleEmail',
-      passwordField: 'password',
-    },
-    User.authenticate()
-  )
-);
-
 const sessionSecret = process.env.SESSION_SECRET;
 
 if (!sessionSecret) {

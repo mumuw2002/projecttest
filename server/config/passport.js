@@ -1,60 +1,79 @@
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
-const User = require('../models/User'); // ปรับเส้นทางให้ถูกต้อง
+const LocalStrategy = require('passport-local').Strategy;
+const User = require('../models/User');
 
+// Google OAuth Strategy
 passport.use(
   new GoogleStrategy(
     {
-    clientID: process.env.GOOGLE_CLIENT_ID,
-    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      clientID: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
       callbackURL: '/auth/google/callback',
-  },
-  async (accessToken, refreshToken, profile, done) => {
-    try {
+    },
+    async (accessToken, refreshToken, profile, done) => {
+      try {
         console.log('Google OAuth Login');
-        console.log('Google Email:', profile.emails[0].value); // แสดง email
-        console.log('Google Profile:', profile); // แสดงข้อมูลโปรไฟล์ทั้งหมด
-        
-      let user = await User.findOne({ googleId: profile.id });
-      
-      if (!user) {
-        user = new User({
-          googleId: profile.id,
-          name: profile.displayName,
-          email: profile.emails[0].value,
+        console.log('Google Email:', profile.emails[0].value);
+        console.log('Google Profile:', profile);
+
+        let user = await User.findOne({ googleId: profile.id });
+
+        if (!user) {
+          user = new User({
+            googleId: profile.id,
+            name: profile.displayName,
+            email: profile.emails[0].value,
             role: profile.emails[0].value === process.env.ADMIN_EMAIL ? 'admin' : 'user',
             profileImage: profile.photos[0]?.value || '',
-        });
-        await user.save();
-      } else {
-          // ถ้ามีผู้ใช้แล้ว อัปเดตข้อมูล
+          });
+          await user.save();
+        } else {
           if (profile.emails[0].value === process.env.ADMIN_EMAIL) {
-          user.role = 'admin';
-                await user.save();
+            user.role = 'admin';
+            await user.save();
           }
-      }
+        }
 
-      return done(null, user);
-    } catch (err) {
-      console.error(err);
-      return done(err, null);
+        return done(null, user);
+      } catch (err) {
+        console.error(err);
+        return done(err, null);
+      }
     }
-  }
   )
 );
 
+// Local Strategy
+passport.use(
+  new LocalStrategy(
+    {
+      usernameField: 'googleEmail',
+      passwordField: 'password',
+    },
+    User.authenticate()
+  )
+);
 
 // Serialize user
 passport.serializeUser((user, done) => {
-  done(null, user.id); // serialize ด้วย user ID
+  console.log('Serializing user:', user.id);
+  done(null, user.id);
 });
 
 // Deserialize user
 passport.deserializeUser(async (id, done) => {
   try {
+    console.log('Deserializing user with id:', id);
     const user = await User.findById(id);
-    done(null, user); // deserialize user จาก database
+    if (!user) {
+      console.error('User not found during deserialization');
+      return done(null, false);
+    }
+    console.log('User found during deserialization:', user);
+    done(null, user);
   } catch (err) {
+    console.error('Deserialization error:', err);
     done(err, null);
   }
 });
