@@ -43,50 +43,48 @@ exports.loginPage = (req, res) => {
 
 exports.login = async (req, res, next) => {
   if (!req.body.googleEmail || !req.body.password) {
-      req.flash('error', 'Please enter email and password');
-      console.log('Login attempt: Missing email or password');
-      return res.redirect('/login');
+    req.flash('error', 'Please enter email and password');
+    console.log('Login attempt: Missing email or password');
+    return res.redirect('/login');
   }
 
   passport.authenticate('local', async (err, user, info) => {
+    if (err) {
+      console.error('Authentication error:', err);
+      return next(err);
+    }
+
+    if (!user) {
+      req.flash('error', info.message || 'Invalid email or password');
+      console.log('Login attempt: Invalid email or password');
+      return res.redirect('/login');
+    }
+
+    req.logIn(user, async (err) => {
       if (err) {
-          console.error('Authentication error:', err);
-          return next(err);
+        console.error('Login error:', err);
+        return next(err);
       }
+      try {
+        user.lastLogin = Date.now();
+        user.lastActive = Date.now();
+        await user.save();
 
-      if (!user) {
-          req.flash('error', info.message || 'Invalid email or password');
-          console.log('Login attempt: Invalid email or password');
-          return res.redirect('/login');
+        console.log('User authenticated:', req.isAuthenticated());
+        console.log('User role:', user.role);
+        console.log('User ID:', user._id);
+        console.log('Session ID:', req.sessionID);
+
+        if (user.role === 'admin') {
+          return res.redirect('/adminPage');
+        } else {
+          return res.redirect('/space');
+        }
+      } catch (error) {
+        console.error('Error updating lastActive:', error);
+        return next(error);
       }
-
-      req.logIn(user, async (err) => {
-          if (err) {
-              console.error('Login error:', err);
-              return next(err);
-          }
-          try {
-              user.lastLogin = Date.now(); 
-              user.lastActive = Date.now(); 
-              await user.save();
-
-              // Debugging
-              console.log('User authenticated:', req.isAuthenticated());
-              console.log('User role:', user.role);
-              console.log('User ID:', user._id);
-              console.log('Session ID:', req.sessionID);
-
-              // Redirect based on role
-              if (user.role === 'admin') {
-                  return res.redirect('/adminPage'); 
-              } else {
-                  return res.redirect('/space'); 
-              }
-          } catch (error) {
-              console.error('Error updating lastActive:', error);
-              return next(error);
-          }
-      });
+    });
   })(req, res, next);
 };
 

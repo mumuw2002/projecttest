@@ -38,23 +38,22 @@ const adminPassword = process.env.ADMIN_PASSWORD; // ดึงรหัสผ่
 // สร้าง Admin เมื่อเซิร์ฟเวอร์เริ่มทำงาน
 const createAdminUser = async () => {
   try {
-      const existingAdmin = await User.findOne({ googleEmail: adminEmail });
+    const existingAdmin = await User.findOne({ googleEmail: adminEmail });
 
-      if (!existingAdmin) {
-          const newAdmin = new User({
-              googleEmail: adminEmail,
-              username: 'Administrator',
-              role: 'admin',
-          });
+    if (!existingAdmin) {
+      const newAdmin = new User({
+        googleEmail: adminEmail,
+        username: 'Administrator',
+        role: 'admin',
+      });
 
-          // Hash adminPassword ก่อนบันทึก
-          const saltRounds = 10; 
-          const hashedPassword = await bcrypt.hash(adminPassword, saltRounds); 
+      const saltRounds = 10;
+      const hashedPassword = await bcrypt.hash(adminPassword, saltRounds);
 
-          await User.register(newAdmin, hashedPassword); 
-      } 
+      await User.register(newAdmin, hashedPassword);
+    }
   } catch (err) {
-      console.error('Failed to create admin user:', err);
+    console.error('Failed to create admin user:', err);
   }
 };
 
@@ -90,32 +89,34 @@ passport.use(User.createStrategy());
 
 
 // Passport configuration
-passport.use(
-  new LocalStrategy(
-    {
-      usernameField: 'googleEmail', // ใช้ googleEmail เป็น usernameField
-      passwordField: 'password', // ใช้ password เป็น passwordField
-    },
-    User.authenticate()
-  )
-);
 
 // Serialize user
 passport.serializeUser((user, done) => {
-  console.log('Serializing user:', user._id); // ตรวจสอบว่า user ถูก serialize หรือไม่
+  console.log('Serializing user:', user._id);
   done(null, user._id);
 });
+
 
 // Deserialize user
 passport.deserializeUser(async (id, done) => {
   try {
     const user = await User.findById(id);
-    console.log('Deserializing user:', user); // ตรวจสอบว่า user ถูก deserialize หรือไม่
+    console.log('Deserializing user:', user);
     done(null, user);
   } catch (err) {
     done(err, null);
   }
 });
+
+passport.use(
+  new LocalStrategy(
+    {
+      usernameField: 'googleEmail',
+      passwordField: 'password',
+    },
+    User.authenticate()
+  )
+);
 
 const generateSessionSecret = () => {
   return crypto.randomBytes(32).toString('hex'); // สร้าง string ยาว 64 ตัวอักษร
@@ -124,28 +125,26 @@ const generateSessionSecret = () => {
 const sessionSecret = generateSessionSecret();
 console.log('Generated SESSION_SECRET:', sessionSecret);
 
-// Session setup
 app.use(
   session({
     secret: process.env.SESSION_SECRET || sessionSecret,
     resave: false,
     saveUninitialized: false,
     store: MongoStore.create({
-      mongoUrl: process.env.MONGODB_URI, // URL ของ MongoDB
-      collectionName: 'sessions', // ชื่อคอลเล็กชันที่ใช้เก็บ session
-      autoRemove: 'interval', // เปิดใช้งานการลบอัตโนมัติ
-      autoRemoveInterval: 10, // ลบทุกๆ 10 นาที
+      mongoUrl: process.env.MONGODB_URI,
+      collectionName: 'sessions',
+      autoRemove: 'interval',
+      autoRemoveInterval: 10,
       ttl: 24 * 60 * 60,
     }),
     cookie: {
-      secure: process.env.NODE_ENV === 'production',
+      secure: process.env.NODE_ENV === 'production', // ใช้ true หากใช้ HTTPS
       httpOnly: true,
-      sameSite: 'lax', // ใช้ 'strict' หากต้องการเพิ่มความปลอดภัย
+      sameSite: 'lax',
       maxAge: 24 * 60 * 60 * 1000,
     },
   })
 );
-
 
 app.use((req, res, next) => {
   console.log('Session ID:', req.sessionID);

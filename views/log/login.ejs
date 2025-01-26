@@ -17,47 +17,20 @@
 <body>
     <div class="warpper">
         <form action="/login" method="POST">
-            <h1 class="title">เข้าสู่ระบบ</h1>
-            <% if (locals.error && locals.error.length > 0) { %>
-                <div class="alert alert-danger">
-                    <%= locals.error %>
-                </div>
-            <% } %>            
             <div class="input-box">
-                <span class="span-text">อีเมล:</span>
-                <input type="email" name="googleEmail" placeholder="อีเมล" required>
-                <i class="bx bxs-envelope"></i>
+              <span class="span-text">อีเมล:</span>
+              <input type="email" name="googleEmail" placeholder="อีเมล" required>
+              <i class="bx bxs-envelope"></i>
             </div>
-            
-
-            <!-- Password field -->
             <div class="input-box">
-                <span class="span-text">รหัสผ่าน:</span>
-                <input type="password" name="password" placeholder="รหัสผ่าน" required>
-                <i class="bx bxs-lock-alt"></i>
+              <span class="span-text">รหัสผ่าน:</span>
+              <input type="password" name="password" placeholder="รหัสผ่าน" required>
+              <i class="bx bxs-lock-alt"></i>
             </div>
-
-            <!-- Remember me and forgot password -->
-            <div class="forgot">
-                <label>
-                </label>
-                <a href="/forgot-password">ลืมรหัสผ่าน</a>
-            </div>
-
             <button type="submit" class="btn">เข้าสู่ระบบ</button>
-            <a href="/auth/google" class="google_btn">
-                <img src="/img/g-logo.png">
-                <span>Sing in with Google</span>
-            </a>
-
-            <!-- Register link -->
-            <div class="register">
-                <p>คุณยังไม่มีบัญชีใช่หรือไม่
-                    <a href="/register">สมัครสมาชิกเลย!</a>
-                </p>
-            </div>
-        </form>
+          </form>
     </div>
+
 </body>
 
 </html>

@@ -69,12 +69,12 @@ const UserSchema = new Schema({
     resetTokenExpiration: {
         type: Date,
         required: false,
-    },    
+    },
 });
 
 UserSchema.plugin(passportLocalMongoose, { usernameField: 'googleEmail' });
 // เพิ่มเมธอด comparePassword
-UserSchema.methods.comparePassword = async function(candidatePassword) {
+UserSchema.methods.comparePassword = async function (candidatePassword) {
     return await bcrypt.compare(candidatePassword, this.password);
 };
 

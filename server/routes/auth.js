@@ -36,11 +36,10 @@ passport.deserializeUser(async (id, done) => {
 });
 
 // Google OAuth authentication route
-router.get("/auth/google", userActivityLogger, passport.authenticate("google", { scope: ["email", "profile"] }));
+router.get("/auth/google", passport.authenticate("google", { scope: ["email", "profile"] }));
 router.get("/google/callback", passport.authenticate("google", {
   failureRedirect: "/login-failure",
 }), (req, res) => {
-  // ตรวจสอบบทบาท
   if (req.user.role === 'admin') {
     return res.redirect('/adminPage');
   } else {

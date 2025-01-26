@@ -1,6 +1,4 @@
 // check auth middleware
-const Subject = require('../models/Subject'); // Adjust the path as needed
-const User = require('../models/User');
 
 exports.isLoggedIn = async function (req, res, next) {
     console.log('Checking authentication...');
@@ -12,4 +10,3 @@ exports.isLoggedIn = async function (req, res, next) {
       return res.redirect('/login');
     }
   };
-  
