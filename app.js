@@ -18,7 +18,7 @@ const schedule = require('node-schedule'); // เพิ่มการใช้�
 const SystemAnnouncement = require('./server/models/SystemAnnouncements'); // เพิ่มโมเดล SystemAnnouncements
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
-const passport = require('./server/config/passport'); 
+const passport = require('../config/passport'); 
 
 const app = express();
 const port = process.env.PORT || 5001;
