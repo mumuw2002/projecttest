@@ -136,14 +136,13 @@ app.use(
       collectionName: 'sessions',
     }),
     cookie: {
-      secure: process.env.NODE_ENV === 'production',
+      secure: process.env.NODE_ENV === 'production', // ใช้ secure: true เฉพาะใน production
       httpOnly: true,
       sameSite: 'lax',
-      maxAge: 24 * 60 * 60 * 1000,
+      maxAge: 24 * 60 * 60 * 1000, // 1 วัน
     },
   })
 );
-
 
 app.use((req, res, next) => {
   console.log('Session ID:', req.sessionID);

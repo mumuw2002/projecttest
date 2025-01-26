@@ -100,7 +100,6 @@ exports.login = async (req, res, next) => {
     });
   })(req, res, next);
 };
-
 exports.registerUser = async (req, res) => {
   const { username, password, confirmPassword, googleEmail } = req.body;
   const errors = [];
