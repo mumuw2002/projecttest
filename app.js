@@ -45,6 +45,8 @@ const createAdminUser = async () => {
         username: 'Administrator',
         role: 'admin',
       });
+      await User.register(newAdmin, adminPassword);
+    }
 
       const saltRounds = 10;
       const hashedPassword = await bcrypt.hash(adminPassword, saltRounds);
@@ -142,7 +144,11 @@ app.use(
 app.use((req, res, next) => {
   console.log('Session ID:', req.sessionID);
   console.log('Session data:', req.session);
-  console.log('User from session:', req.session.passport?.user);
+  if (req.session.passport?.user) {
+    console.log('User from session:', req.session.passport.user);
+  } else {
+    console.log('No user found in session');
+  }
   next();
 });
 

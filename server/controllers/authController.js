@@ -7,33 +7,38 @@ const { sendEmail } = require("../../emailService");
 
 exports.googleCallback = async (accessToken, refreshToken, profile, done) => {
   try {
-      let user = await User.findOne({ googleId: profile.id }) || await User.findOne({ googleEmail: profile.emails[0].value });
+    // ตรวจสอบว่ามีอีเมลในโปรไฟล์ Google หรือไม่
+    if (!profile.emails || !profile.emails[0]) {
+      return done(new Error('No email found in Google profile'), null);
+    }
 
-      if (user) {
-          user.lastActive = Date.now();
-          await user.save();
-          if (!user.googleId) { // Update Google ID if not present
-              user.googleId = profile.id;
-              user.profileImage = profile.photos[0]?.value || '/img/profileImage/Profile.jpeg';
-              await user.save();
-          }
-          return done(null, user);
+    let user = await User.findOne({ googleId: profile.id }) || await User.findOne({ googleEmail: profile.emails[0].value });
+
+    if (user) {
+      user.lastActive = Date.now();
+      await user.save();
+      if (!user.googleId) { // Update Google ID if not present
+        user.googleId = profile.id;
+        user.profileImage = profile.photos[0]?.value || '/img/profileImage/Profile.jpeg';
+        await user.save();
       }
+      return done(null, user);
+    }
 
-      const newUser = new User({
-          googleId: profile.id,
-          googleEmail: profile.emails[0].value,
-          profileImage: profile.photos[0]?.value || '/img/profileImage/Profile.jpeg',
-          role: profile.emails[0].value === process.env.ADMIN_EMAIL ? "admin" : "user",
-          lastActive: Date.now(),
-      });
+    const newUser = new User({
+      googleId: profile.id,
+      googleEmail: profile.emails[0].value,
+      profileImage: profile.photos[0]?.value || '/img/profileImage/Profile.jpeg',
+      role: profile.emails[0].value === process.env.ADMIN_EMAIL ? "admin" : "user",
+      lastActive: Date.now(),
+    });
 
-      const savedUser = await newUser.save();
-      adminController.sendUnexpiredAnnouncementsToNewUser(savedUser.googleEmail);
-      return done(null, savedUser);
+    const savedUser = await newUser.save();
+    adminController.sendUnexpiredAnnouncementsToNewUser(savedUser.googleEmail);
+    return done(null, savedUser);
   } catch (error) {
-      console.error('Error in Google Authentication:', error);
-      return done(error, null);
+    console.error('Error in Google Authentication:', error);
+    return done(error, null);
   }
 };
 
@@ -69,17 +74,20 @@ exports.login = async (req, res, next) => {
         user.lastLogin = Date.now();
         user.lastActive = Date.now();
         await user.save();
-
-        console.log('User authenticated:', req.isAuthenticated());
-        console.log('User role:', user.role);
-        console.log('User ID:', user._id);
-        console.log('Session ID:', req.sessionID);
-
-        if (user.role === 'admin') {
-          return res.redirect('/adminPage');
-        } else {
-          return res.redirect('/space');
-        }
+        req.session.save((err) => {
+          if (err) {
+            console.error('Error saving session:', err);
+          } else {
+            console.log('Session saved successfully');
+          }
+          if (user.role === 'admin') {
+            return res.redirect('/adminPage');
+          } else if (user.role === 'user') {
+            return res.redirect('/space');
+          } else {
+            return res.redirect('/login');
+          }
+        });
       } catch (error) {
         console.error('Error updating lastActive:', error);
         return next(error);
