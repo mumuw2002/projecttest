@@ -8,6 +8,8 @@ exports.homepage = async (req, res) => {
     description: "Free NodeJS Notes App.",
   }
   res.render('index', {
+    user: req.user,
+    users: users,
     locals,
     layout: '../views/layouts/front-page'
   });

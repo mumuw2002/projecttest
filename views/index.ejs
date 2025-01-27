@@ -1,18 +1,16 @@
-
 <head>
   <link rel="stylesheet" href="./css/indexCss/index.css">
   <style>
-    
+
   </style>
 </head>
+
 <body>
   <div class="container">
     <div class="contentfistpage">
       <div class="weltext">
         <p>
-          สร้างประสบการณ์การจัดการงานที่รวดเร็ว<br /><span
-            >มีประสิทธิภาพผ่านเว็บแอปพลิเคชันบริหารงาน</span
-          >
+          สร้างประสบการณ์การจัดการงานที่รวดเร็ว<br /><span>มีประสิทธิภาพผ่านเว็บแอปพลิเคชันบริหารงาน</span>
         </p>
         <a href="/login">ลองเลย!</a>
       </div>
@@ -27,7 +25,7 @@
               <span class="google-icon"><i class="fab fa-google"></i></span>
             </a>
           </div>
-          
+
           <div class="line">
             <div class="line1"></div>
             <span>หรือ</span>
@@ -42,6 +40,30 @@
       </div>
     </div>
     <div class="linefooter"></div>
-    <div class="footer"><p>&copy; 2024 TaskManage Company.</p></div>
+    <div class="footer">
+      <p>&copy; 2024 TaskManage Company.</p>
+    </div>
   </div>
+  <tbody>
+    <% if (users.length) { %>
+      <% users.forEach((user, index)=> { %>
+        <tr data-user-id="<%= user._id %>"
+          onclick="showUserDetailsPopup('<%= user._id %>', '<%= user.username %>', '<%= user.googleEmail %>', '<%= user.userid %>')">
+          <td>
+            <%= user.userid %>
+          </td>
+          <td>
+            <%= user.username %>
+          </td>
+          <td>
+            <%= user.googleEmail %>
+          </td>
+        </tr>
+        <% }); %>
+          <% } else { %>
+            <tr class="no-data">
+              <td colspan="6">ไม่พบข้อมูล</td>
+            </tr>
+            <% } %>
+  </tbody>
 </body>
