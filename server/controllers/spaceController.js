@@ -9,6 +9,7 @@ moment.locale('th');
 
 // Space Dashboard
 exports.SpaceDashboard = async (req, res) => {
+  console.log('req.user in spaceController.SpaceDashboard:', req.user);
   try {
     const userId = new mongoose.Types.ObjectId(req.user.id); // ใช้ new เพื่อสร้าง ObjectId
 
