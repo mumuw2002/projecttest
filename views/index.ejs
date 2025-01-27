@@ -44,26 +44,4 @@
       <p>&copy; 2024 TaskManage Company.</p>
     </div>
   </div>
-  <tbody>
-    <% if (users && users.length) { %>
-      <% users.forEach((user, index)=> { %>
-        <tr data-user-id="<%= user._id %>"
-          onclick="showUserDetailsPopup('<%= user._id %>', '<%= user.username %>', '<%= user.googleEmail %>', '<%= user.userid %>')">
-          <td>
-            <%= user.userid %>
-          </td>
-          <td>
-            <%= user.username %>
-          </td>
-          <td>
-            <%= user.googleEmail %>
-          </td>
-        </tr>
-      <% }); %>
-    <% } else { %>
-      <tr class="no-data">
-        <td colspan="6">ไม่พบข้อมูล</td>
-      </tr>
-    <% } %>
-  </tbody>
 </body>
