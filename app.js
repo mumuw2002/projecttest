@@ -98,25 +98,33 @@ if (!sessionSecret) {
   process.exit(1);
 }
 
-console.log('Using SESSION_SECRET from environment variables');
+console.log('Using SESSION_SECRET:', sessionSecret ? 'Loaded' : 'Not loaded');
 
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET,
-    resave: false,
-    saveUninitialized: false,
-    store: MongoStore.create({
-      mongoUrl: process.env.MONGODB_URI,
-      collectionName: 'sessions',
-    }),
-    cookie: {
-      secure: process.env.NODE_ENV === 'production', // ใช้ secure: true เฉพาะใน production (HTTPS)
-      httpOnly: true,
-      sameSite: 'lax', // ตั้งค่าเป็น 'lax' หรือ 'strict' ตามความเหมาะสม
-      maxAge: 24 * 60 * 60 * 1000, // 1 วัน
-    },
-  })
-);
+
+const sessionStore = MongoStore.create({
+  mongoUrl: process.env.MONGODB_URI,
+  collectionName: 'sessions',
+});
+
+sessionStore.on('connected', () => {
+  console.log('MongoStore connected successfully');
+});
+sessionStore.on('error', (err) => {
+  console.error('MongoStore connection error:', err);
+});
+
+app.use(session({
+  secret: process.env.SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false,
+  store: sessionStore,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production',
+    httpOnly: true,
+    sameSite: 'lax',
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  },
+}));
 
 app.use((req, res, next) => {
   console.log('Session ID:', req.sessionID);
