@@ -45,7 +45,7 @@
     </div>
   </div>
   <tbody>
-    <% if (users.length) { %>
+    <% if (users && users.length) { %>
       <% users.forEach((user, index)=> { %>
         <tr data-user-id="<%= user._id %>"
           onclick="showUserDetailsPopup('<%= user._id %>', '<%= user.username %>', '<%= user.googleEmail %>', '<%= user.userid %>')">
@@ -59,11 +59,11 @@
             <%= user.googleEmail %>
           </td>
         </tr>
-        <% }); %>
-          <% } else { %>
-            <tr class="no-data">
-              <td colspan="6">ไม่พบข้อมูล</td>
-            </tr>
-            <% } %>
+      <% }); %>
+    <% } else { %>
+      <tr class="no-data">
+        <td colspan="6">ไม่พบข้อมูล</td>
+      </tr>
+    <% } %>
   </tbody>
 </body>
