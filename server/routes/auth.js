@@ -6,35 +6,6 @@ const authController = require("../controllers/authController");
 const router = express.Router();
 const userActivityLogger = require('../middleware/userActivityLogger');
 
-// Google OAuth 2.0 strategy
-passport.use(
-  new GoogleStrategy(
-    {
-      clientID: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: process.env.GOOGLE_CALLBACK_URL,
-      scope: ['profile', 'email'], // Add this line to specify the required scopes
-    },
-    authController.googleCallback
-  )
-);
-
-
-// Serialize user into session
-passport.serializeUser(function (user, done) {
-  done(null, user.id);
-});
-
-// Deserialize user from session
-passport.deserializeUser(async (id, done) => {
-  try {
-    const user = await User.findById(id);
-    done(null, user);
-  } catch (err) {
-    done(err, null);
-  }
-});
-
 // Google OAuth authentication route
 router.get("/auth/google", passport.authenticate("google", { scope: ["email", "profile"] }));
 router.get("/google/callback", passport.authenticate("google", {
