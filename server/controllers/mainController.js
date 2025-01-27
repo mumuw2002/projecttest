@@ -2,6 +2,8 @@
  * GET /
  * Homepage
 */
+const User = require('../models/User'); // ตรวจสอบ path ให้ถูกต้อง
+
 exports.homepage = async (req, res) => {
   try {
     const users = await User.find({}); // ดึงข้อมูลผู้ใช้ทั้งหมดจากฐานข้อมูล
