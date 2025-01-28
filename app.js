@@ -109,6 +109,7 @@ const sessionStore = MongoStore.create({
 sessionStore.on('connected', () => {
   console.log('MongoStore connected successfully');
 });
+
 sessionStore.on('error', (err) => {
   console.error('MongoStore connection error:', err);
 });
@@ -121,7 +122,7 @@ app.use(session({
   cookie: {
     secure: process.env.NODE_ENV === 'production',  // HTTPS ใน production เท่านั้น
     httpOnly: true,
-    sameSite: 'none',
+    sameSite: 'lax',
     maxAge: 7 * 24 * 60 * 60 * 1000,  // อายุ session 7 วัน
   },
 }));
