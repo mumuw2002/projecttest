@@ -11,7 +11,7 @@ router.get('/space', isLoggedIn, userActivityLogger, (req, res, next) => {
     console.log('User ID:', req.user?._id);
     spaceController.SpaceDashboard(req, res, next);
 });
-router.post('/createSpace', isLoggedIn, userActivityLogger, spaceController.createSpace);
+router.post('/createSpace', userActivityLogger, spaceController.createSpace);
 router.delete('/space/delete/:id', isLoggedIn, spaceController.deleteSpace);
 router.put('/space/:id/recover', isLoggedIn, spaceController.recoverSpace);
 router.get('/subject/recover', isLoggedIn, spaceController.ShowRecover);
