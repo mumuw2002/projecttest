@@ -89,6 +89,10 @@ exports.deleteSpace = async (req, res) => {
 // Show subjects that can Recover
 exports.ShowRecover = async (req, res) => {
   try {
+    const userId = req.user ? new mongoose.Types.ObjectId(req.user.id) : null;
+    if (!userId) {
+      return res.status(401).send('Unauthorized');
+    }
     const spaces = await Spaces.aggregate([
       { $match: { user: new mongoose.Types.ObjectId(req.user.id), deleted: true } }, // ใช้ new เพื่อสร้าง ObjectId
       { $project: { SpaceName: 1, SpaceDescription: 1 } },

@@ -52,7 +52,21 @@ passport.use(
       usernameField: 'googleEmail',
       passwordField: 'password',
     },
-    User.authenticate()
+    async (googleEmail, password, done) => {
+      try {
+        const user = await User.findOne({ googleEmail });
+        if (!user) {
+          return done(null, false, { message: 'Incorrect email.' });
+        }
+        const isValidPassword = await user.verifyPassword(password);
+        if (!isValidPassword) {
+          return done(null, false, { message: 'Incorrect password.' });
+        }
+        return done(null, user);
+      } catch (err) {
+        return done(err);
+      }
+    }
   )
 );
 
