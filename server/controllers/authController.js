@@ -117,6 +117,7 @@ exports.login = async (req, res, next) => {
             console.error('Error saving session:', err);
           } else {
             console.log('Session saved successfully');
+            console.log('Session ID:', req.sessionID);
             console.log('Session data after save:', req.session); // ตรวจสอบข้อมูล session
           }
 

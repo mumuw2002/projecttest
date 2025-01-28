@@ -119,12 +119,14 @@ app.use(session({
   saveUninitialized: false,
   store: sessionStore,
   cookie: {
-    secure: process.env.NODE_ENV === 'production',
+    secure: true,
     httpOnly: true,
-    sameSite: 'lax',
+    sameSite: 'none',
     maxAge: 7 * 24 * 60 * 60 * 1000,
   },
 }));
+
+console.log("MongoDB Session Store Connected");
 
 app.use((req, res, next) => {
   console.log('Session ID:', req.sessionID);
