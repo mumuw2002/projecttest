@@ -5,7 +5,7 @@ const { isLoggedIn } = require('../middleware/checkAuth');
 const spaceController = require('../controllers/spaceController');
 const userActivityLogger = require('../middleware/userActivityLogger');
 
-router.get('/space', userActivityLogger, (req, res, next) => {
+router.get('/space', isLoggedIn, userActivityLogger, (req, res, next) => {
     console.log('Accessing /space route');
     console.log('User role:', req.user?.role);
     console.log('User ID:', req.user?._id);
