@@ -94,6 +94,13 @@ passport.use(User.createStrategy());
 
 const sessionSecret = process.env.SESSION_SECRET || 'fallbackSecret1234';
 
+console.log('🔑 Using SESSION_SECRET:', sessionSecret ? 'Loaded' : 'Not loaded');
+
+app.use(cors({
+  origin: "https://your-production-site.com",
+  credentials: true
+}));
+
 if (!sessionSecret) {
   console.error('SESSION_SECRET is not defined in environment variables');
   process.exit(1);
@@ -101,11 +108,6 @@ if (!sessionSecret) {
 
 console.log('Using SESSION_SECRET:', sessionSecret ? 'Loaded' : 'Not loaded');
 
-// CORS Configuration
-app.use(cors({
-  origin: "https://your-production-site.com",
-  credentials: true
-}));
 
 const sessionStore = MongoStore.create({
   mongoUrl: process.env.MONGODB_URI,
@@ -123,7 +125,7 @@ sessionStore.on('error', (err) => {
 console.log("SESSION_SECRET:", process.env.SESSION_SECRET);
 
 app.use(session({
-  secure: false,
+  secret: sessionSecret,
   resave: false,
   saveUninitialized: false,
   store: sessionStore,
@@ -135,7 +137,7 @@ app.use(session({
   },
 }));
 
-app.set('trust proxy', 1); // สำคัญถ้าใช้ Proxy/Nginx
+app.set('trust proxy', 1);
 
 console.log("MongoDB Session Store Connected");
 
@@ -146,7 +148,6 @@ app.use((req, res, next) => {
   console.log('User from session:', req.user);
   next();
 });
-
 
 console.log('Session middleware initialized');
 console.log('MongoDB URI:', process.env.MONGODB_URI);
@@ -207,7 +208,6 @@ app.use(expressLayouts);
 app.set('layout', './layouts/main');
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
-app.set('trust proxy', 1);
 
 // Routes setup
 app.use('/', require('./server/routes/auth'));
