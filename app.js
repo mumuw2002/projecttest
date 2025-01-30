@@ -18,6 +18,7 @@ const SystemAnnouncement = require('./server/models/SystemAnnouncements');
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 const passport = require('./server/config/passport');
+const cors = require('cors');
 
 const app = express();
 const port = process.env.PORT || 5001;
