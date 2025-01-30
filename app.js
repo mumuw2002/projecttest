@@ -16,7 +16,7 @@ const bodyParser = require('body-parser');
 const schedule = require('node-schedule');
 const SystemAnnouncement = require('./server/models/SystemAnnouncements');
 const bcrypt = require('bcrypt');
-const crypto = require('crypto');
+const cors = require('cors');  // เพิ่ม CORS
 const passport = require('./server/config/passport');
 
 const app = express();
@@ -28,119 +28,53 @@ app.use(bodyParser.json());
 
 // Connect to Database
 connectDB().catch(err => {
-  console.error('Failed to connect to database:', err);
+  console.error('❌ Failed to connect to database:', err);
   process.exit(1);
 });
 
 if (!process.env.SESSION_SECRET) {
-  console.error('SESSION_SECRET is not defined in environment variables');
+  console.error('❌ SESSION_SECRET is not defined in environment variables');
   process.exit(1);
 }
 
-const adminEmail = process.env.ADMIN_EMAIL;
-const adminPassword = process.env.ADMIN_PASSWORD;
+const sessionSecret = process.env.SESSION_SECRET || 'fallbackSecret1234'; // Fallback
 
-// สร้าง Admin เมื่อเซิร์ฟเวอร์เริ่มทำงาน
-const createAdminUser = async () => {
-  try {
-    const existingAdmin = await User.findOne({ googleEmail: adminEmail });
+console.log('🔑 Using SESSION_SECRET:', sessionSecret ? 'Loaded' : 'Not loaded');
 
-    if (!existingAdmin) {
-      const newAdmin = new User({
-        googleEmail: adminEmail,
-        username: 'Administrator',
-        role: 'admin',
-      });
+// CORS Configuration
+app.use(cors({
+  origin: "https://your-production-site.com",
+  credentials: true
+}));
 
-      const saltRounds = 10;
-      const hashedPassword = await bcrypt.hash(adminPassword, saltRounds);
-
-      await User.register(newAdmin, hashedPassword);
-    }
-  } catch (err) {
-    console.error('Failed to create admin user:', err);
-  }
-};
-
-createAdminUser();
-
-// ตั้งค่าการลบประกาศที่หมดอายุทุกวันเวลาเที่ยงคืน
-schedule.scheduleJob('0 0 * * *', async () => {
-  try {
-    const now = new Date();
-    const result = await SystemAnnouncement.updateMany(
-      { expirationDate: { $lt: now }, isDeleted: { $ne: true } },
-      { isDeleted: true, updatedAt: now }
-    );
-    console.log(`${result.nModified} ประกาศที่หมดอายุถูกย้ายไปที่ history เรียบร้อยแล้ว`);
-  } catch (error) {
-    console.error('Error moving expired announcements to history:', error);
-  }
-});
-
-// เรียกใช้งานฟังก์ชันหลังเชื่อมต่อฐานข้อมูล
-connectDB()
-  .then(() => {
-    console.log('Connected to database');
-    createAdminUser();
-  })
-  .catch(err => {
-    console.error('Failed to connect to database:', err);
-    process.exit(1);
-  });
-
-passport.use(User.createStrategy());
-
-const sessionSecret = process.env.SESSION_SECRET;
-
-if (!sessionSecret) {
-  console.error('SESSION_SECRET is not defined in environment variables');
-  process.exit(1);
-}
-
-console.log('Using SESSION_SECRET:', sessionSecret ? 'Loaded' : 'Not loaded');
-
-
+// MongoDB Session Store
 const sessionStore = MongoStore.create({
   mongoUrl: process.env.MONGODB_URI,
   collectionName: 'sessions',
 });
 
 sessionStore.on('connected', () => {
-  console.log('MongoStore connected successfully');
+  console.log('✅ MongoStore connected successfully');
 });
 
 sessionStore.on('error', (err) => {
-  console.error('MongoStore connection error:', err);
+  console.error('❌ MongoStore error:', err);
 });
 
 app.use(session({
-  secret: process.env.SESSION_SECRET,
+  secret: sessionSecret,
   resave: false,
   saveUninitialized: false,
   store: sessionStore,
   cookie: {
-    secure: process.env.NODE_ENV === 'production',  // HTTPS ใน production เท่านั้น
+    secure: process.env.NODE_ENV === 'production',  // ปิด HTTPS ชั่วคราวหากมีปัญหา
     httpOnly: true,
     sameSite: 'lax',
     maxAge: 7 * 24 * 60 * 60 * 1000,  // อายุ session 7 วัน
   },
 }));
 
-console.log("MongoDB Session Store Connected");
-
-app.use((req, res, next) => {
-  console.log('Session ID:', req.sessionID);
-  console.log('Session data:', req.session);
-  console.log('User from session:', req.session.passport?.user);
-  console.log('User from session:', req.user);
-  next();
-});
-
-
-console.log('Session middleware initialized');
-console.log('MongoDB URI:', process.env.MONGODB_URI);
-console.log('Session secret:', process.env.SESSION_SECRET ? 'Set' : 'Not set');
+app.set('trust proxy', 1); // สำคัญถ้าใช้ Proxy/Nginx
 
 app.use(passport.initialize());
 app.use(passport.session());
@@ -149,8 +83,6 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/img', express.static(path.join(__dirname, 'public/img')));
-app.use('/public', express.static(path.join(__dirname, 'public')));
-app.use('/docUploads', express.static(path.join(__dirname, 'docUploads')));
 app.use(methodOverride('_method'));
 
 app.use(helmet());
@@ -165,38 +97,13 @@ app.use((req, res, next) => {
   next();
 });
 
-// Middleware to handle due date validation and formatting
+// Middleware for logging session
 app.use((req, res, next) => {
-  if (req.body.dueDate) {
-    const dueDate = moment(req.body.dueDate, moment.ISO_8601, true);
-    if (!dueDate.isValid()) {
-      console.error('Invalid date format:', req.body.dueDate);
-      req.flash('error', 'Invalid date format');
-      return res.redirect('back');
-    }
-    req.body.dueDate = dueDate.toISOString();
-  }
+  console.log('🔍 Session ID:', req.sessionID);
+  console.log('📝 Session Data:', req.session);
+  console.log('👤 User from session:', req.user);
   next();
 });
-
-// Middleware to update lastActive on each request
-app.use(async (req, res, next) => {
-  if (req.isAuthenticated()) {
-    try {
-      req.user.lastActive = Date.now();
-      await req.user.save();
-    } catch (error) {
-      console.error('Error updating lastActive:', error);
-    }
-  }
-  next();
-});
-
-// Templating Engine setup
-app.use(expressLayouts);
-app.set('layout', './layouts/main');
-app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'ejs');
 
 // Routes setup
 app.use('/', require('./server/routes/auth'));
@@ -219,5 +126,5 @@ app.get('*', (req, res) => {
 
 // Start the server
 app.listen(port, () => {
-  console.log(`Server listening at http://localhost:${port}`);
+  console.log(`🚀 Server listening at http://localhost:${port}`);
 });
