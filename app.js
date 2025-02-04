@@ -38,33 +38,6 @@ if (!process.env.SESSION_SECRET) {
   process.exit(1);
 }
 
-const adminEmail = process.env.ADMIN_EMAIL;
-const adminPassword = process.env.ADMIN_PASSWORD;
-
-// สร้าง Admin เมื่อเซิร์ฟเวอร์เริ่มทำงาน
-const createAdminUser = async () => {
-  try {
-    const existingAdmin = await User.findOne({ googleEmail: adminEmail });
-
-    if (!existingAdmin) {
-      const newAdmin = new User({
-        googleEmail: adminEmail,
-        username: 'Administrator',
-        role: 'admin',
-      });
-
-      const saltRounds = 10;
-      const hashedPassword = await bcrypt.hash(adminPassword, saltRounds);
-
-      await User.register(newAdmin, hashedPassword);
-    }
-  } catch (err) {
-    console.error('Failed to create admin user:', err);
-  }
-};
-
-createAdminUser();
-
 // ตั้งค่าการลบประกาศที่หมดอายุทุกวันเวลาเที่ยงคืน
 schedule.scheduleJob('0 0 * * *', async () => {
   try {
@@ -83,7 +56,6 @@ schedule.scheduleJob('0 0 * * *', async () => {
 connectDB()
   .then(() => {
     console.log('Connected to database');
-    createAdminUser();
   })
   .catch(err => {
     console.error('Failed to connect to database:', err);
