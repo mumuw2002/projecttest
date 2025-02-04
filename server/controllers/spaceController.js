@@ -27,7 +27,7 @@ exports.SpaceDashboard = async (req, res) => {
     res.render("space/space-dashboard", {
       spaces,
       user: req.user,
-      layout: "../views/layouts/space"
+      layout: "layouts/Space"
     });
   } catch (error) {
     console.error("Error fetching spaces:", error);
